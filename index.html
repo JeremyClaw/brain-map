@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jeremy Brain Map</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top, #1f2340 0%, #0e1020 55%, #090b15 100%);
+    color: #eef2ff;
+    overflow: hidden;
+  }
+  #wrap { position: relative; width: 100vw; height: 100vh; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  .title {
+    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    text-align: center; pointer-events: none;
+  }
+  .title h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
+  .title p { margin: 4px 0 0; font-size: 12px; color: #a8b3d8; }
+  .legend {
+    position: absolute; left: 18px; bottom: 18px; background: rgba(12,14,28,0.86);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px;
+    backdrop-filter: blur(10px); font-size: 12px;
+  }
+  .legend div { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .tip {
+    position: absolute; display: none; max-width: 280px; padding: 12px 14px;
+    border-radius: 12px; background: rgba(10,12,24,0.95); border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35); font-size: 13px; line-height: 1.45;
+    color: #edf1ff; pointer-events: none;
+  }
+  .tip h3 { margin: 0 0 6px; font-size: 14px; }
+  .tip .src { margin-top: 8px; font-size: 11px; color: #9fb0dc; }
+  .help {
+    position: absolute; right: 18px; bottom: 18px; background: rgba(12,14,28,0.86);
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px;
+    backdrop-filter: blur(10px); font-size: 12px; color: #b7c0de;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div class="title">
+    <h1>🧠 Jeremy Brain Map</h1>
+    <p>19 nodes · sourced memory · linked workflows</p>
+  </div>
+  <canvas id="c"></canvas>
+  <div class="tip" id="tip"></div>
+  <div class="legend">
+    <div><span class="dot" style="background:#ff6b6b"></span>People</div>
+    <div><span class="dot" style="background:#4ecdc4"></span>Clients</div>
+    <div><span class="dot" style="background:#ffe66d"></span>Projects</div>
+    <div><span class="dot" style="background:#a29bfe"></span>Workflows</div>
+    <div><span class="dot" style="background:#fd79a8"></span>Infrastructure</div>
+    <div><span class="dot" style="background:#74b9ff"></span>Decisions</div>
+  </div>
+  <div class="help">Hover nodes for detail. Drag them around if you want.</div>
+</div>
+<script>
+const colors = {
+  people:'#ff6b6b', clients:'#4ecdc4', projects:'#ffe66d', workflows:'#a29bfe', infra:'#fd79a8', decisions:'#74b9ff'
+};
+const nodes = [
+  {id:'deej', label:'Deej', cat:'people', r:28, info:'Dylan Burke · owner · media buyer · Cape Town', src:'direct + profile context'},
+  {id:'lauri', label:'Lauri', cat:'people', r:18, info:'Deej\'s sister · works for Symbols on Silk + FLC', src:'confirmed by Deej, 2 Apr 2026'},
+  {id:'symbols', label:'Symbols on Silk', cat:'clients', r:24, info:'Jewellery client · Meta spend tracked Nov-Mar · linked to Athena + Nova', src:'topic 132 + direct confirmation'},
+  {id:'soshell', label:'So Shell', cat:'clients', r:24, info:'Jewellery client · Nova proof-of-concept brand · v7 creative round complete', src:'topic 35 + direct confirmation'},
+  {id:'pina', label:'Pina Jewels', cat:'clients', r:18, info:'Client · brand DNA file prepared in Nova', src:'main session + direct confirmation'},
+  {id:'gloei', label:'Gloei Beauty', cat:'clients', r:18, info:'Client · brand DNA file prepared in Nova', src:'main session + direct confirmation'},
+  {id:'flc', label:'FLC', cat:'clients', r:16, info:'First Light Couriers · client · connected to Lauri', src:'direct confirmation'},
+  {id:'athena', label:'Athena', cat:'projects', r:24, info:'Media-buyer agent · Sonnet · Meta API access · analysis workspace', src:'18 Mar setup'},
+  {id:'nova', label:'Nova', cat:'projects', r:24, info:'Creative agent · not fully deployed yet · learns every 2 days', src:'main session'},
+  {id:'spotlight', label:'Spotlight', cat:'projects', r:18, info:'Impress [name] landing page workflow', src:'18 Mar setup'},
+  {id:'thirsty', label:'ThirstyBird', cat:'projects', r:16, info:'Marketing venture in progress', src:'project memory'},
+  {id:'workflow', label:'So Shell Creative Workflow', cat:'workflows', r:22, info:'Brief → Images → Copy → Render → Upload → Review → Revise', src:'topic 35'},
+  {id:'setup', label:'OpenClaw Setup', cat:'infra', r:18, info:'Jarvis host · Telegram groups · Chrome headless · Tailscale', src:'18 Mar setup'},
+  {id:'github', label:'GitHub', cat:'infra', r:14, info:'JeremyClaw account · Spotlight repo', src:'18 Mar setup'},
+  {id:'meta', label:'Meta Ads API', cat:'infra', r:18, info:'System user + keychain token + ads_read', src:'Athena architecture'},
+  {id:'models', label:'Model Usage', cat:'decisions', r:18, info:'Cheapest model first: GPT → Sonnet → Opus', src:'standing rule'},
+  {id:'email', label:'Email Format', cat:'decisions', r:14, info:'Greeting → context → ask → optional closing → signature', src:'standing rule'},
+  {id:'memory', label:'Memory Sourcing', cat:'decisions', r:18, info:'Every fact needs a source. No ghost data.', src:'brain build decision'},
+  {id:'index', label:'Brain Index', cat:'workflows', r:16, info:'Lightweight entrypoint into the full brain/', src:'built 3 Apr 2026'}
+];
+const edges = [
+  ['deej','lauri'], ['deej','symbols'], ['deej','soshell'], ['deej','pina'], ['deej','gloei'], ['deej','flc'], ['deej','athena'], ['deej','nova'], ['deej','thirsty'],
+  ['lauri','symbols'], ['lauri','flc'],
+  ['symbols','athena'], ['symbols','nova'], ['symbols','meta'],
+  ['soshell','nova'], ['soshell','workflow'],
+  ['pina','nova'], ['gloei','nova'],
+  ['athena','meta'], ['athena','models'],
+  ['nova','models'], ['nova','workflow'], ['nova','index'],
+  ['spotlight','github'],
+  ['setup','github'], ['setup','meta'],
+  ['email','deej'], ['memory','deej'], ['memory','index']
+];
+
+const layout = {
+  people: [0.30, 0.26],
+  clients: [0.68, 0.28],
+  projects: [0.26, 0.62],
+  workflows: [0.55, 0.70],
+  infra: [0.74, 0.64],
+  decisions: [0.48, 0.48]
+};
+
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const tip = document.getElementById('tip');
+let W = 0, H = 0, hovered = null, drag = null, mouseX = 0, mouseY = 0;
+function resize() {
+  W = canvas.width = window.innerWidth * devicePixelRatio;
+  H = canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.style.width = window.innerWidth + 'px';
+  canvas.style.height = window.innerHeight + 'px';
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  if (!nodes[0].x) seed();
+}
+function seed() {
+  nodes.forEach(n => {
+    const [lx,ly] = layout[n.cat];
+    n.x = window.innerWidth * lx + (Math.random()-0.5) * 160;
+    n.y = window.innerHeight * ly + (Math.random()-0.5) * 120;
+    n.vx = 0; n.vy = 0;
+  });
+}
+function step() {
+  for (let i=0;i<nodes.length;i++) {
+    for (let j=i+1;j<nodes.length;j++) {
+      const a = nodes[i], b = nodes[j];
+      let dx = b.x-a.x, dy = b.y-a.y;
+      let d = Math.hypot(dx,dy) || 0.1;
+      let min = a.r + b.r + 36;
+      if (d < min) {
+        let f = (min-d) * 0.012;
+        dx/=d; dy/=d;
+        a.vx -= dx*f; a.vy -= dy*f;
+        b.vx += dx*f; b.vy += dy*f;
+      }
+    }
+  }
+  edges.forEach(([aId,bId]) => {
+    const a = nodes.find(n=>n.id===aId), b = nodes.find(n=>n.id===bId);
+    let dx = b.x-a.x, dy = b.y-a.y;
+    let d = Math.hypot(dx,dy) || 0.1;
+    let target = 150;
+    let f = (d-target) * 0.0018;
+    dx/=d; dy/=d;
+    a.vx += dx*f; a.vy += dy*f;
+    b.vx -= dx*f; b.vy -= dy*f;
+  });
+  nodes.forEach(n => {
+    if (drag === n) { n.x = mouseX; n.y = mouseY; n.vx = n.vy = 0; return; }
+    const [lx,ly] = layout[n.cat];
+    n.vx += (window.innerWidth*lx - n.x) * 0.0009;
+    n.vy += (window.innerHeight*ly - n.y) * 0.0009;
+    n.vx *= 0.92; n.vy *= 0.92;
+    n.x += n.vx; n.y += n.vy;
+  });
+}
+function connected(a,b) {
+  return edges.some(([x,y]) => (x===a.id&&y===b.id)||(x===b.id&&y===a.id));
+}
+function draw() {
+  ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+  edges.forEach(([aId,bId]) => {
+    const a = nodes.find(n=>n.id===aId), b = nodes.find(n=>n.id===bId);
+    const active = hovered && (hovered.id===aId || hovered.id===bId);
+    ctx.strokeStyle = active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.10)';
+    ctx.lineWidth = active ? 2 : 1;
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  });
+  nodes.forEach(n => {
+    const dim = hovered && hovered!==n && !connected(hovered,n);
+    ctx.globalAlpha = dim ? 0.25 : 1;
+    if (hovered===n) {
+      ctx.shadowColor = colors[n.cat];
+      ctx.shadowBlur = 26;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+    ctx.fillStyle = colors[n.cat];
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = n.cat === 'projects' ? '#202124' : '#ffffff';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const size = n.r >= 22 ? 12 : 10;
+    ctx.font = `600 ${size}px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+    const words = n.label.split(' ');
+    let lines = [];
+    if (n.label.length > 12 && words.length > 1) {
+      const mid = Math.ceil(words.length/2);
+      lines = [words.slice(0,mid).join(' '), words.slice(mid).join(' ')];
+    } else {
+      lines = [n.label];
+    }
+    lines.forEach((line,i)=>ctx.fillText(line,n.x,n.y + (i-(lines.length-1)/2)*13));
+    ctx.globalAlpha = 1;
+  });
+}
+function tick(){ step(); draw(); requestAnimationFrame(tick); }
+function pick(x,y){ return nodes.find(n => Math.hypot(x-n.x, y-n.y) <= n.r); }
+canvas.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  if (!drag) hovered = pick(mouseX, mouseY) || null;
+  if (hovered) {
+    tip.style.display = 'block';
+    tip.innerHTML = `<h3>${hovered.label}</h3>${hovered.info}<div class="src">Source: ${hovered.src}</div>`;
+    let left = mouseX + 16, top = mouseY - 10;
+    if (left + 300 > window.innerWidth) left = mouseX - 300;
+    if (top + 120 > window.innerHeight) top = mouseY - 120;
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+    canvas.style.cursor = 'pointer';
+  } else {
+    tip.style.display = 'none';
+    canvas.style.cursor = 'default';
+  }
+ });
+canvas.addEventListener('mousedown', e => { drag = pick(e.clientX, e.clientY); });
+window.addEventListener('mouseup', () => { drag = null; });
+window.addEventListener('resize', resize);
+resize();
+tick();
+</script>
+</body>
+</html>
