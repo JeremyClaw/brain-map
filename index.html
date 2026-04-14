@@ -1,248 +1,821 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Jeremy Brain Map</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: radial-gradient(circle at top, #1f2340 0%, #0e1020 55%, #090b15 100%);
-    color: #eef2ff;
-  }
-  #wrap { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
-  canvas { display: block; width: 100vw; height: 100vh; }
-  .title {
-    position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
-    text-align: center; pointer-events: none; z-index: 2;
-  }
-  .title h1 { margin: 0; font-size: 22px; letter-spacing: 0.5px; }
-  .title p { margin: 4px 0 0; font-size: 12px; color: #a8b3d8; }
-  .legend {
-    position: absolute; left: 18px; bottom: 18px; background: rgba(12,14,28,0.86);
-    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px;
-    backdrop-filter: blur(10px); font-size: 12px; z-index: 2;
-  }
-  .legend div { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .help {
-    position: absolute; right: 18px; bottom: 18px; background: rgba(12,14,28,0.86);
-    border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px;
-    backdrop-filter: blur(10px); font-size: 12px; color: #b7c0de; z-index: 2;
-  }
-  .toolbar {
-    position: absolute; top: 18px; left: 18px; display: flex; gap: 10px; z-index: 2;
-  }
-  button {
-    background: rgba(12,14,28,0.86); color: #eef2ff; border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px; padding: 10px 12px; cursor: pointer; font-weight: 600;
-  }
-  .panel {
-    position: absolute; right: 18px; top: 80px; width: 420px; max-width: calc(100vw - 36px); max-height: calc(100vh - 110px);
-    overflow: auto; background: rgba(10,12,24,0.96); border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px; box-shadow: 0 18px 50px rgba(0,0,0,0.35); padding: 18px; display: none; z-index: 3;
-  }
-  .panel.open { display: block; }
-  .panel h2 { margin: 0 0 6px; font-size: 22px; }
-  .muted { color: #9fb0dc; font-size: 12px; }
-  .section { margin-top: 16px; }
-  .section h3 { margin: 0 0 8px; font-size: 13px; color: #c8d3f4; text-transform: uppercase; letter-spacing: 0.08em; }
-  .chip { display: inline-block; padding: 4px 8px; border-radius: 999px; background: rgba(255,255,255,0.08); margin: 4px 6px 0 0; font-size: 12px; }
-  ul { margin: 8px 0 0 18px; padding: 0; }
-  li { margin: 6px 0; line-height: 1.45; }
-  .close { float: right; font-size: 20px; line-height: 1; background: none; border: none; padding: 0; color: #a8b3d8; }
-  .small { font-size: 13px; line-height: 1.55; color: #dde5ff; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jezza Operating Map</title>
+  <style>
+    :root {
+      --bg: #0a0d18;
+      --bg-2: #11172a;
+      --card: rgba(16, 22, 39, 0.82);
+      --card-2: rgba(15, 21, 35, 0.92);
+      --line: rgba(255,255,255,0.08);
+      --text: #edf3ff;
+      --muted: #aab8d6;
+      --accent: #6ee7ff;
+      --green: #7ef29a;
+      --amber: #ffd166;
+      --red: #ff7b7b;
+      --violet: #b99cff;
+      --blue: #7db5ff;
+      --pink: #ff8fcd;
+      --shadow: 0 20px 60px rgba(0,0,0,0.35);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(65,120,255,0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(110,231,255,0.14), transparent 24%),
+        radial-gradient(circle at bottom left, rgba(185,156,255,0.12), transparent 22%),
+        linear-gradient(180deg, #0c1120 0%, #090d16 100%);
+      min-height: 100vh;
+    }
+    a { color: var(--accent); }
+    .page {
+      max-width: 1420px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: stretch;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+    .hero-main {
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-main::after {
+      content: "";
+      position: absolute;
+      inset: auto -60px -60px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(110,231,255,0.16), transparent 70%);
+      pointer-events: none;
+    }
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      color: var(--accent);
+      font-size: 12px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 0.96;
+      letter-spacing: -0.03em;
+      max-width: 10ch;
+    }
+    .hero-main p {
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 68ch;
+      margin: 16px 0 0;
+    }
+    .hero-side {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+    .metric .num {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .metric .label {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(126,242,154,0.22);
+      padding: 10px 14px;
+      color: #dfffe8;
+      background: rgba(126,242,154,0.08);
+      font-size: 13px;
+      font-weight: 700;
+      width: fit-content;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(340px, 420px);
+      gap: 18px;
+      align-items: start;
+    }
+    .graph-card {
+      padding: 18px;
+    }
+    .graph-topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .graph-title h2, .side-card h3, .section-card h3 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+    button:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
+    button.active { background: rgba(110,231,255,0.12); border-color: rgba(110,231,255,0.32); color: #dffbff; }
+    #graphWrap {
+      position: relative;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)),
+        radial-gradient(circle at center, rgba(110,231,255,0.04), transparent 45%);
+      overflow: hidden;
+      min-height: 700px;
+    }
+    canvas { display: block; width: 100%; height: 700px; }
+    .legend {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      max-width: calc(100% - 28px);
+    }
+    .legend .item {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(8,12,22,0.76);
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+    }
+    .legend .item.active {
+      color: var(--text);
+      border-color: rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.09);
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      flex: none;
+    }
+    .graph-hint {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(8,12,22,0.76);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--muted);
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      max-width: 250px;
+      line-height: 1.45;
+    }
+    .side-stack {
+      display: grid;
+      gap: 18px;
+      position: sticky;
+      top: 18px;
+    }
+    .side-card, .section-card {
+      padding: 20px;
+    }
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .chip {
+      font-size: 12px;
+      color: #dbe7ff;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .detail-body {
+      margin-top: 16px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+    .detail-body ul { margin: 10px 0 0 18px; padding: 0; }
+    .detail-body li { margin: 8px 0; }
+    .detail-meta {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #9fb0d6;
+    }
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .flow {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .step {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      padding: 14px 14px 14px 46px;
+      min-height: 64px;
+    }
+    .step .n {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 800;
+      background: rgba(110,231,255,0.16);
+      color: #dbfbff;
+      border: 1px solid rgba(110,231,255,0.3);
+    }
+    .step strong { display: block; margin-bottom: 4px; }
+    .step p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .accordion {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    details {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.03);
+      overflow: hidden;
+    }
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    summary::-webkit-details-marker { display: none; }
+    details .inner {
+      padding: 0 16px 16px;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+    .footer {
+      margin-top: 24px;
+      color: #8f9bb8;
+      font-size: 12px;
+      text-align: center;
+    }
+    @media (max-width: 1120px) {
+      .hero, .layout, .section-grid { grid-template-columns: 1fr; }
+      .side-stack { position: static; }
+    }
+    @media (max-width: 720px) {
+      .page { padding: 16px 12px 48px; }
+      .hero-main, .hero-side, .graph-card, .side-card, .section-card { padding: 16px; }
+      #graphWrap, canvas { min-height: 560px; height: 560px; }
+      .metric-grid { grid-template-columns: 1fr 1fr; }
+      h1 { max-width: 12ch; }
+    }
+  </style>
 </head>
 <body>
-<div id="wrap">
-  <div class="toolbar">
-    <button id="btnOverview">Archive overview</button>
+  <div class="page">
+    <section class="hero">
+      <div class="hero-main card">
+        <div class="eyebrow">Operating map · thread-safe context design</div>
+        <h1>How Jezza actually handles a message</h1>
+        <p>
+          This is the proper x-ray view: what context loads first, what gets searched only when needed, where skills and tools kick in,
+          and why a fresh thread can feel clever in one moment and like a concussed golden retriever in the next.
+        </p>
+        <div class="chip-row">
+          <span class="chip">Fresh thread ≠ same short-term memory</span>
+          <span class="chip">Durable docs beat chat history</span>
+          <span class="chip">Permissions are session-specific</span>
+          <span class="chip">Memory recall is retrieval-based</span>
+        </div>
+      </div>
+      <div class="hero-side card">
+        <div>
+          <div class="status-pill">● GitHub Pages-ready interactive explainer</div>
+          <div class="sub" style="margin-top:12px;">
+            Built from your actual workspace structure: session rules, memory system, archive design, brain notes, and deployment setup.
+          </div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric"><div class="num">4</div><div class="label">Main context layers: instructions, files, memory retrieval, thread history</div></div>
+          <div class="metric"><div class="num">3</div><div class="label">Common failure modes: missing docs, missing retrieval, session permission mismatch</div></div>
+          <div class="metric"><div class="num">2365</div><div class="label">Archive conversations indexed separately from active brain</div></div>
+          <div class="metric"><div class="num">1</div><div class="label">Cheapest viable model rule governs the whole circus</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="layout">
+      <div class="graph-card card">
+        <div class="graph-topbar">
+          <div class="graph-title">
+            <h2>Interactive operating diagram</h2>
+            <div class="sub">Click nodes to inspect them. Use the buttons to switch views. Drag things around if you feel like causing chaos.</div>
+          </div>
+          <div class="button-row">
+            <button class="active" data-view="system">System map</button>
+            <button data-view="message">Message journey</button>
+            <button data-view="failure">Failure points</button>
+            <button data-view="future">Recommended architecture</button>
+          </div>
+        </div>
+        <div id="graphWrap">
+          <canvas id="graph"></canvas>
+          <div class="graph-hint">Tip: the important distinction is <strong>default-loaded context</strong> versus <strong>retrieved-on-demand context</strong>. That’s where most thread weirdness comes from.</div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+
+      <aside class="side-stack">
+        <div class="side-card card" id="detailCard">
+          <h3>Pick a node</h3>
+          <div class="sub">Start with <strong>Incoming Message</strong>, <strong>Session Startup</strong>, or <strong>Durable Workflow Docs</strong>.</div>
+          <div class="detail-body">
+            Click any node in the diagram and I’ll show what it actually means in plain English instead of waffling like a consultant who’s discovered gradients.
+          </div>
+        </div>
+
+        <div class="side-card card">
+          <h3>Why new threads go weird</h3>
+          <div class="detail-body">
+            <ul>
+              <li><strong>Short-term context lives in chat history</strong>, not in some eternal global brain.</li>
+              <li><strong>Durable memory must be retrieved</strong>; it is not all preloaded every time.</li>
+              <li><strong>Skills are conditional</strong>; they only load if a task clearly matches them.</li>
+              <li><strong>Tool reach and approvals can differ</strong> per session or runtime.</li>
+              <li><strong>Old brilliant process work is useless cross-thread</strong> if it never got promoted into docs or memory.</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section-grid">
+      <div class="section-card card">
+        <h3>Message handling flow</h3>
+        <div class="flow">
+          <div class="step"><span class="n">1</span><strong>Message lands</strong><p>Current message, metadata, runtime rules, and the present session history become the starting point.</p></div>
+          <div class="step"><span class="n">2</span><strong>Session startup</strong><p>Core workspace files are read first so identity, user context, and operating rules are in place.</p></div>
+          <div class="step"><span class="n">3</span><strong>Task routing</strong><p>I decide whether this needs memory recall, a skill, project docs, tools, approval, or just a direct answer.</p></div>
+          <div class="step"><span class="n">4</span><strong>Execution</strong><p>Files, browser, shell, sub-agents, or GitHub flows happen based on this session’s permissions and tool access.</p></div>
+        </div>
+      </div>
+
+      <div class="section-card card">
+        <h3>What loads by default vs on demand</h3>
+        <div class="accordion">
+          <details open>
+            <summary><span>Default-loaded first</span><span>Always matters</span></summary>
+            <div class="inner">
+              Runtime instructions, AGENTS-style startup rules, persona/voice rules, user profile, current thread history, and any explicitly injected project context.
+            </div>
+          </details>
+          <details>
+            <summary><span>Retrieved when needed</span><span>Conditional</span></summary>
+            <div class="inner">
+              Long-term memory search, daily notes, project/client/workflow docs, skill playbooks, archive lookups, browser inspection, repo exploration, and external fetches.
+            </div>
+          </details>
+          <details>
+            <summary><span>Not reliable unless documented</span><span>The dangerous bit</span></summary>
+            <div class="inner">
+              Clever conclusions from old chats, temporary process state, assumptions made mid-thread, half-built workflows, and anything only ever said once in a buried conversation.
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="section-card card">
+        <h3>What to fix for consistency</h3>
+        <div class="detail-body">
+          <ul>
+            <li>Create canonical project docs for every active project.</li>
+            <li>Promote recurring processes into workflow notes immediately.</li>
+            <li>Keep daily memory notes present and current.</li>
+            <li>Add a routing map: “if task mentions X, read Y first”.</li>
+            <li>Treat chat history as temporary working memory, not long-term architecture.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">Built by Deej · interactive explainer for thread-safe context architecture</div>
   </div>
-  <div class="title">
-    <h1>🧠 Jeremy Brain Map</h1>
-    <p>Click a node to inspect it properly · vault expanded</p>
-  </div>
-  <canvas id="c"></canvas>
-  <div class="legend">
-    <div><span class="dot" style="background:#ff6b6b"></span>People</div>
-    <div><span class="dot" style="background:#4ecdc4"></span>Clients</div>
-    <div><span class="dot" style="background:#ffe66d"></span>Projects</div>
-    <div><span class="dot" style="background:#a29bfe"></span>Workflows</div>
-    <div><span class="dot" style="background:#fd79a8"></span>Infrastructure</div>
-    <div><span class="dot" style="background:#74b9ff"></span>Decisions</div>
-  </div>
-  <div class="help">Hover for quick glance. Click for deeper node detail. Drag nodes around if you want.</div>
-  <div class="panel" id="panel"></div>
-</div>
-<script>
-const archiveOverview = {
-  total: 2365,
-  status: { safe: 2249, sensitive: 51, exclude: 52, mixed_work: 13 },
-  buckets: { archive_misc: 1335, clients_brands: 441, sales_career: 182, copy_creative: 164, projects_workflows: 133, health_allowed: 58 }
-};
-const nodeDetails = {
-  deej: { title:'Deej', type:'Person', source:'Direct conversations + profile context', summary:'Dylan “Deej” Burke. Owner. Cape Town. Media buyer. Central node tying together clients, projects, systems, and decision-making.', bullets:['Owner of this whole circus','Works across DTC brands and creative/media systems','Primary human context the brain is built around'], links:['Lauri','Athena','Nova','So Shell','Symbols on Silk','ThirstyBird'] },
-  lauri: { title:'Lauri', type:'Person', source:'Confirmed by Deej, 2 Apr 2026', summary:'Deej’s sister. Connected to Symbols on Silk and First Light Couriers.', bullets:['Corrected spelling from earlier “Lori” ghost entry','Useful relationship node across family + client context'], links:['Deej','Symbols on Silk','FLC'] },
-  symbols: { title:'Symbols on Silk', type:'Client', source:'Meta API pull + direct confirmation', summary:'Jewellery client with tracked Meta ad spend and linkage to both Athena and Nova systems.', bullets:['Meta Ad Account linked','Monthly spend imported (Nov–Mar)','Connected to Lauri and Deej'], links:['Athena','Nova','Lauri','Meta Ads API'] },
-  soshell: { title:'So Shell', type:'Client', source:'Topic 35 creative thread', summary:'Primary proof-of-concept creative brand for Nova. Most developed workflow in the brain so far.', bullets:['Ethical jewellery / Cape Town artisan positioning','v7 creative round completed','Strongest documented workflow so far'], links:['Nova','So Shell Creative Workflow'] },
-  pina: { title:'Pina Jewels', type:'Client', source:'Main session + direct confirmation', summary:'Client brand with DNA prepared in Nova, but not fully promoted into active creative system.', bullets:['Prepared separately','Not fully baked into Nova by default'], links:['Nova','Deej'] },
-  gloei: { title:'Gloei Beauty', type:'Client', source:'Main session + direct confirmation', summary:'Beauty brand client with separate brand DNA prepared for future creative use.', bullets:['Prepared but not deeply expanded yet'], links:['Nova','Deej'] },
-  flc: { title:'First Light Couriers', type:'Client', source:'Direct confirmation', summary:'Courier/logistics client node, currently lightweight but linked via Lauri.', bullets:['Relationship useful more than detailed ops memory currently'], links:['Lauri','Deej'] },
-  athena: { title:'Athena', type:'Project', source:'18 Mar setup + Athena session', summary:'Media-buyer agent with Meta API access, ad analysis capacity, and client profile/workspace structure.', bullets:['Sonnet model','Meta Marketing API connected','Andromeda Bible + troubleshooting docs'], links:['Symbols on Silk','Meta Ads API','Model Usage'] },
-  nova: { title:'Nova', type:'Project', source:'Main session', summary:'Creative agent/workspace. Not fully deployed as standalone operator yet, but has the strongest future potential for structured creative memory.', bullets:['Ad creation + creative research','Not prospecting','Learning loop every 2 days'], links:['So Shell','Pina Jewels','Gloei Beauty','Athena','Model Usage'] },
-  spotlight: { title:'Spotlight', type:'Project', source:'18 Mar setup', summary:'“Impress [name]” workflow for building personalised landing pages.', bullets:['GitHub Pages deployment','Verification step required to avoid wrong-person builds'], links:['GitHub'] },
-  thirsty: { title:'ThirstyBird', type:'Project', source:'Project memory', summary:'Marketing venture in progress. Currently a lighter node than Nova/So Shell.', bullets:['Plan sent','Still in progress'], links:['Deej'] },
-  workflow: { title:'So Shell Creative Workflow', type:'Workflow', source:'Topic 35', summary:'The clearest reusable workflow in the current brain: from brief to render to review to revision loop.', bullets:['Brief → Images → Copy → Render → Upload → Review → Revise','Tracks rationale, not just outputs','Exactly the sort of thing a good brain should store'], links:['So Shell','Nova'] },
-  setup: { title:'OpenClaw Setup', type:'Infrastructure', source:'18 Mar setup', summary:'Core host/runtime setup: Jarvis, Telegram groups, Chrome headless, Tailscale, and the operational environment.', bullets:['Host = Jarvis','Telegram + forum/topic support','Chrome headless used for rendering'], links:['GitHub','Meta Ads API'] },
-  github: { title:'GitHub', type:'Infrastructure', source:'18 Mar setup', summary:'Publishing and repo layer. Currently used for brain-map site and Spotlight repo.', bullets:['JeremyClaw account','Brain map published via GitHub Pages'], links:['Spotlight','OpenClaw Setup'] },
-  meta: { title:'Meta Ads API', type:'Infrastructure', source:'Athena architecture', summary:'System-user based access model for ad account retrieval without relying on Deej’s personal Facebook account.', bullets:['Keychain token storage','ads_read access','One identity → multiple accounts'], links:['Athena','Symbols on Silk'] },
-  models: { title:'Model Usage', type:'Decision', source:'Standing rule', summary:'Cheapest viable model first. Core cost-control rule that should govern the whole system.', bullets:['GPT → Sonnet → Opus','Use the least expensive model that does the job properly'], links:['Athena','Nova'] },
-  email: { title:'Email Format', type:'Decision', source:'Standing rule', summary:'Default email structure and sign-off pattern for outbound communication.', bullets:['Greeting → context → ask → optional closing → signature'], links:['Deej'] },
-  memory: { title:'Memory Sourcing', type:'Decision', source:'Brain build decision', summary:'Anti-ghost-data rules. This exists because earlier memory had fabricated or unsourced entries.', bullets:['Every fact should have source discipline','No more hallucinated long-term memory'], links:['Deej','Brain Index'] },
-  index: { title:'Brain Index', type:'Index Layer', source:'Built 3 Apr 2026', summary:'The lightweight entrypoint into the structured brain. Helps avoid loading everything all the time.', bullets:['Supports low-token retrieval design','Works with archive/search architecture'], links:['Memory Sourcing','Nova'] },
-};
-const colors = { people:'#ff6b6b', clients:'#4ecdc4', projects:'#ffe66d', workflows:'#a29bfe', infra:'#fd79a8', decisions:'#74b9ff' };
-const nodes = [
-  {id:'deej', label:'Deej', cat:'people', r:28},
-  {id:'lauri', label:'Lauri', cat:'people', r:18},
-  {id:'symbols', label:'Symbols on Silk', cat:'clients', r:24},
-  {id:'soshell', label:'So Shell', cat:'clients', r:24},
-  {id:'pina', label:'Pina Jewels', cat:'clients', r:18},
-  {id:'gloei', label:'Gloei Beauty', cat:'clients', r:18},
-  {id:'flc', label:'FLC', cat:'clients', r:16},
-  {id:'athena', label:'Athena', cat:'projects', r:24},
-  {id:'nova', label:'Nova', cat:'projects', r:24},
-  {id:'spotlight', label:'Spotlight', cat:'projects', r:18},
-  {id:'thirsty', label:'ThirstyBird', cat:'projects', r:16},
-  {id:'workflow', label:'So Shell Creative Workflow', cat:'workflows', r:22},
-  {id:'setup', label:'OpenClaw Setup', cat:'infra', r:18},
-  {id:'github', label:'GitHub', cat:'infra', r:14},
-  {id:'meta', label:'Meta Ads API', cat:'infra', r:18},
-  {id:'models', label:'Model Usage', cat:'decisions', r:18},
-  {id:'email', label:'Email Format', cat:'decisions', r:14},
-  {id:'memory', label:'Memory Sourcing', cat:'decisions', r:18},
-  {id:'index', label:'Brain Index', cat:'workflows', r:16}
-];
-const edges = [
-  ['deej','lauri'], ['deej','symbols'], ['deej','soshell'], ['deej','pina'], ['deej','gloei'], ['deej','flc'], ['deej','athena'], ['deej','nova'], ['deej','thirsty'],
-  ['lauri','symbols'], ['lauri','flc'],
-  ['symbols','athena'], ['symbols','nova'], ['symbols','meta'],
-  ['soshell','nova'], ['soshell','workflow'],
-  ['pina','nova'], ['gloei','nova'],
-  ['athena','meta'], ['athena','models'],
-  ['nova','models'], ['nova','workflow'], ['nova','index'],
-  ['spotlight','github'],
-  ['setup','github'], ['setup','meta'],
-  ['email','deej'], ['memory','deej'], ['memory','index']
-];
-const layout = {
-  people: [0.30, 0.26], clients: [0.68, 0.28], projects: [0.26, 0.62], workflows: [0.55, 0.70], infra: [0.74, 0.64], decisions: [0.48, 0.48]
-};
-const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
-const panel = document.getElementById('panel');
-let hovered = null, drag = null, mouseX = 0, mouseY = 0;
-function renderPanelHTML(title, body){
-  panel.innerHTML = `<button class="close" onclick="closePanel()">×</button>${body}`;
-  panel.classList.add('open');
-}
-function closePanel(){ panel.classList.remove('open'); }
-window.closePanel = closePanel;
-function openOverview(){
-  const status = Object.entries(archiveOverview.status).map(([k,v])=>`<span class="chip">${k}: ${v}</span>`).join('');
-  const buckets = Object.entries(archiveOverview.buckets).map(([k,v])=>`<li><strong>${k}</strong>: ${v}</li>`).join('');
-  renderPanelHTML('Archive overview', `
-    <h2>Archive overview</h2>
-    <div class="muted">ChatGPT export indexing layer</div>
-    <div class="section"><h3>Total conversations</h3><div class="small">${archiveOverview.total}</div></div>
-    <div class="section"><h3>Status split</h3>${status}</div>
-    <div class="section"><h3>Bucket counts</h3><ul>${buckets}</ul></div>
-    <div class="section"><h3>What this means</h3><div class="small">The archive is now indexed separately from the active brain. That means raw old conversations do not need to be loaded every session. The brain can stay small while the archive remains searchable on demand.</div></div>
-  `);
-}
-function openNode(id){
-  const d = nodeDetails[id];
-  const chips = (d.links||[]).map(x=>`<span class="chip">${x}</span>`).join('');
-  const bullets = (d.bullets||[]).map(x=>`<li>${x}</li>`).join('');
-  renderPanelHTML(d.title, `
-    <h2>${d.title}</h2>
-    <div class="muted">${d.type} · Source: ${d.source}</div>
-    <div class="section"><h3>Summary</h3><div class="small">${d.summary}</div></div>
-    <div class="section"><h3>Key points</h3><ul>${bullets}</ul></div>
-    <div class="section"><h3>Linked nodes</h3>${chips}</div>
-  `);
-}
-function resize() {
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
-  if (!nodes[0].x) seed();
-}
-function seed() {
-  nodes.forEach(n => {
-    const [lx,ly] = layout[n.cat];
-    n.x = window.innerWidth * lx + (Math.random()-0.5) * 160;
-    n.y = window.innerHeight * ly + (Math.random()-0.5) * 120;
-    n.vx = 0; n.vy = 0;
-  });
-}
-function step() {
-  for (let i=0;i<nodes.length;i++) for (let j=i+1;j<nodes.length;j++) {
-    const a = nodes[i], b = nodes[j];
-    let dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx,dy) || 0.1, min = a.r + b.r + 36;
-    if (d < min) { let f = (min-d) * 0.012; dx/=d; dy/=d; a.vx -= dx*f; a.vy -= dy*f; b.vx += dx*f; b.vy += dy*f; }
-  }
-  edges.forEach(([aId,bId]) => {
-    const a = nodes.find(n=>n.id===aId), b = nodes.find(n=>n.id===bId);
-    let dx = b.x-a.x, dy = b.y-a.y, d = Math.hypot(dx,dy) || 0.1, target = 150, f = (d-target) * 0.0018;
-    dx/=d; dy/=d; a.vx += dx*f; a.vy += dy*f; b.vx -= dx*f; b.vy -= dy*f;
-  });
-  nodes.forEach(n => {
-    if (drag === n) { n.x = mouseX; n.y = mouseY; n.vx = n.vy = 0; return; }
-    const [lx,ly] = layout[n.cat];
-    n.vx += (window.innerWidth*lx - n.x) * 0.0009;
-    n.vy += (window.innerHeight*ly - n.y) * 0.0009;
-    n.vx *= 0.92; n.vy *= 0.92;
-    n.x += n.vx; n.y += n.vy;
-  });
-}
-function connected(a,b) { return edges.some(([x,y]) => (x===a.id&&y===b.id)||(x===b.id&&y===a.id)); }
-function draw() {
-  ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-  edges.forEach(([aId,bId]) => {
-    const a = nodes.find(n=>n.id===aId), b = nodes.find(n=>n.id===bId);
-    const active = hovered && (hovered.id===aId || hovered.id===bId);
-    ctx.strokeStyle = active ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.10)';
-    ctx.lineWidth = active ? 2 : 1;
-    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-  });
-  nodes.forEach(n => {
-    const dim = hovered && hovered!==n && !connected(hovered,n);
-    ctx.globalAlpha = dim ? 0.25 : 1;
-    if (hovered===n) { ctx.shadowColor = colors[n.cat]; ctx.shadowBlur = 26; } else { ctx.shadowBlur = 0; }
-    ctx.fillStyle = colors[n.cat]; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill(); ctx.shadowBlur = 0;
-    ctx.fillStyle = n.cat === 'projects' ? '#202124' : '#ffffff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    const size = n.r >= 22 ? 12 : 10; ctx.font = `600 ${size}px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
-    const words = n.label.split(' '); let lines=[];
-    if (n.label.length > 12 && words.length > 1) { const mid = Math.ceil(words.length/2); lines=[words.slice(0,mid).join(' '), words.slice(mid).join(' ')]; }
-    else { lines=[n.label]; }
-    lines.forEach((line,i)=>ctx.fillText(line,n.x,n.y + (i-(lines.length-1)/2)*13));
-    ctx.globalAlpha = 1;
-  });
-}
-function tick(){ step(); draw(); requestAnimationFrame(tick); }
-function pick(x,y){ return nodes.find(n => Math.hypot(x-n.x, y-n.y) <= n.r); }
-canvas.addEventListener('mousemove', e => { mouseX=e.clientX; mouseY=e.clientY; if (!drag) hovered = pick(mouseX, mouseY) || null; canvas.style.cursor = hovered ? 'pointer' : 'default'; });
-canvas.addEventListener('mousedown', e => { drag = pick(e.clientX, e.clientY); });
-window.addEventListener('mouseup', e => { if (drag && Math.hypot(e.clientX-drag.x,e.clientY-drag.y) < 6) openNode(drag.id); drag = null; });
-document.getElementById('btnOverview').addEventListener('click', openOverview);
-window.addEventListener('resize', resize);
-resize(); tick();
-</script>
+
+  <script>
+    const palette = {
+      trigger: '#6ee7ff',
+      startup: '#7ef29a',
+      memory: '#ffd166',
+      docs: '#b99cff',
+      tools: '#ff8fcd',
+      risks: '#ff7b7b',
+      future: '#7db5ff'
+    };
+
+    const views = {
+      system: {
+        title: 'System map',
+        subtitle: 'What pieces exist in the operating stack right now.',
+        categories: [
+          ['trigger', 'Entry'], ['startup', 'Startup'], ['memory', 'Memory'], ['docs', 'Docs'], ['tools', 'Actions'], ['risks', 'Risks']
+        ],
+        nodes: [
+          { id:'msg', label:'Incoming\nMessage', cat:'trigger', r:28, x:0.11, y:0.18, body:'Every task starts here. I get the new message, current chat metadata, the active session instructions, and whatever thread history exists in this exact conversation window.', bullets:['Fresh thread means less short-term memory by default','The current session is the room I am standing in'], source:'Current runtime/session' },
+          { id:'runtime', label:'Runtime\nInstructions', cat:'startup', r:24, x:0.28, y:0.14, body:'These are the hard rules of the room: allowed tools, behaviour requirements, reply style, safety rules, and session-specific constraints.', bullets:['Highest-priority operating rules','Can differ by environment or runtime'], source:'Runtime envelope' },
+          { id:'startup', label:'Session\nStartup', cat:'startup', r:24, x:0.29, y:0.34, body:'Fresh sessions should read the core operating files first so persona, user context, and workspace rules are active before handling the task.', bullets:['Reads identity + user context first','Daily memory may or may not exist'], source:'AGENTS/SOUL/USER startup flow' },
+          { id:'skills', label:'Skill\nSelection', cat:'docs', r:22, x:0.48, y:0.16, body:'Before replying, I scan the skill list. If one specific skill clearly matches, that skill becomes the playbook for the task.', bullets:['Conditional loading, not always-on','Most specific skill should win'], source:'Workspace skill rules' },
+          { id:'memorySearch', label:'Memory\nSearch', cat:'memory', r:22, x:0.50, y:0.36, body:'For prior work, decisions, dates, people, preferences, or todos, I should search durable memory rather than bluffing. But retrieval only works if the knowledge was actually stored.', bullets:['Search-first for prior-context questions','No stored note = nothing reliable to recall'], source:'Memory recall rule + memory system' },
+          { id:'daily', label:'Daily\nNotes', cat:'memory', r:18, x:0.64, y:0.28, body:'Recent short-term operational context should live in dated memory notes. These help bridge what happened recently across sessions.', bullets:['Useful for active work-in-flight','Missing files reduce continuity'], source:'memory/YYYY-MM-DD.md' },
+          { id:'brain', label:'Durable\nBrain Docs', cat:'docs', r:24, x:0.69, y:0.48, body:'Project, client, system, and workflow docs are the real long-term operating backbone. If it is written here, new threads can recover it.', bullets:['Canonical project/client/workflow context','Much more reliable than old chat history'], source:'brain/ vault + MEMORY index' },
+          { id:'archive', label:'Archive\nIndex', cat:'memory', r:18, x:0.82, y:0.26, body:'Old ChatGPT exports and transcript material are indexed separately. They are searchable when needed, but not loaded every session by default.', bullets:['2365 conversations indexed','Retrieval layer, not default context'], source:'Archive System' },
+          { id:'tools', label:'Tools &\nPermissions', cat:'tools', r:26, x:0.48, y:0.62, body:'After routing the task, I act using the tools this session is allowed to use: read, write, browser, shell, GitHub, sub-agents, and so on.', bullets:['Reach can differ by session','Approvals may gate sensitive actions'], source:'Runtime tool availability' },
+          { id:'reply', label:'Reply /\nAction', cat:'tools', r:22, x:0.70, y:0.72, body:'The final result is a reply, file change, deployment, analysis, or external action — depending on what the session allows and what the task requires.', bullets:['Can be pure answer or multi-tool execution','External actions may require confirmation'], source:'Execution output' },
+          { id:'gap', label:'Thread\nGap', cat:'risks', r:20, x:0.18, y:0.72, body:'This is the nasty little gremlin. A fresh thread does not inherit the entire internal working state of an older one. If context was never written down, it can disappear.', bullets:['Chat history is local to the thread','Undocumented workflows become fragile'], source:'Observed behaviour + memory design' }
+        ],
+        edges: [
+          ['msg','runtime'],['msg','startup'],['runtime','skills'],['startup','skills'],['startup','memorySearch'],['memorySearch','daily'],['memorySearch','brain'],['brain','archive'],['skills','tools'],['memorySearch','tools'],['brain','tools'],['tools','reply'],['msg','gap'],['gap','memorySearch'],['gap','brain']
+        ]
+      },
+      message: {
+        title: 'Message journey',
+        subtitle: 'The order of operations for one incoming task.',
+        categories: [
+          ['trigger', 'Stage'], ['startup', 'Bootstrap'], ['memory', 'Retrieval'], ['docs', 'Routing'], ['tools', 'Execution']
+        ],
+        nodes: [
+          { id:'m1', label:'1. New\nTask', cat:'trigger', r:26, x:0.10, y:0.50, body:'A task arrives. I know the current message and this thread, not the entire universe.', bullets:['Current thread history is available','Other thread state is not magically merged in'], source:'Message ingress' },
+          { id:'m2', label:'2. Read Core\nFiles', cat:'startup', r:24, x:0.26, y:0.50, body:'Core operating files define who I am, who you are, and how the workspace expects me to behave.', bullets:['Persona, user context, startup rules','Recent memory files if present'], source:'SOUL, USER, AGENTS, memory files' },
+          { id:'m3', label:'3. Check\nMemory Need', cat:'memory', r:22, x:0.42, y:0.32, body:'If the task touches prior work, decisions, dates, people, preferences, or todos, memory retrieval should happen before I answer.', bullets:['Prevents fake certainty','Depends on stored memory quality'], source:'Memory recall rule' },
+          { id:'m4', label:'4. Match\nSkill', cat:'docs', r:22, x:0.42, y:0.68, body:'If a specialized skill clearly applies, that skill tells me the proper workflow rather than improvising from memory.', bullets:['Skills are task-specific playbooks','No clear match = proceed without one'], source:'Skill system' },
+          { id:'m5', label:'5. Read\nTask Docs', cat:'docs', r:24, x:0.60, y:0.50, body:'Project docs, workflow notes, client files, local docs, or repo files are pulled in as needed to ground the task.', bullets:['This is where consistency lives','Good docs shrink thread fragility'], source:'brain/ + docs/' },
+          { id:'m6', label:'6. Use Tools\nSafely', cat:'tools', r:24, x:0.78, y:0.50, body:'Read/write/browser/shell/GitHub/sub-agents happen here. The exact tool reach depends on the current session’s permissions and available capabilities.', bullets:['Not every session has identical reach','Approval can be required for riskier actions'], source:'Tool/runtime layer' },
+          { id:'m7', label:'7. Answer,\nBuild or Deploy', cat:'tools', r:22, x:0.92, y:0.50, body:'The result may be a reply, a document, a deployed page, code changes, or a question back to you if the path is ambiguous.', bullets:['Output type depends on task','Good routing leads to predictable execution'], source:'Final step' }
+        ],
+        edges: [['m1','m2'],['m2','m3'],['m2','m4'],['m3','m5'],['m4','m5'],['m5','m6'],['m6','m7']]
+      },
+      failure: {
+        title: 'Failure points',
+        subtitle: 'Where continuity breaks when a new thread starts.',
+        categories: [['risks','Failure'],['memory','Memory'],['docs','Docs'],['tools','Permissions']],
+        nodes: [
+          { id:'f1', label:'Built in Chat\nOnly', cat:'risks', r:28, x:0.16, y:0.22, body:'A useful process got worked out in conversation but never promoted into a durable workflow note. New thread? Gone-ish.', bullets:['Most common continuity failure','Chat-only process = brittle process'], source:'Observed architecture gap' },
+          { id:'f2', label:'Missing Daily\nNote', cat:'memory', r:22, x:0.42, y:0.20, body:'Recent work was never logged into daily memory, so there is no recent bridge between sessions.', bullets:['Startup reads nothing useful','Recent context evaporates fast'], source:'memory/YYYY-MM-DD.md dependency' },
+          { id:'f3', label:'No Searchable\nMemory', cat:'memory', r:22, x:0.68, y:0.20, body:'If the fact or decision never entered durable memory, memory search cannot rescue it. Retrieval cannot find what was never stored.', bullets:['Search is not omniscience','Storage discipline matters'], source:'Memory system rule' },
+          { id:'f4', label:'No Canonical\nProject Doc', cat:'docs', r:24, x:0.28, y:0.56, body:'Without one obvious project file, context gets fragmented across chats, random markdown files, and vibes.', bullets:['No single source of truth','Hard to reconstruct reliably'], source:'Project architecture issue' },
+          { id:'f5', label:'No Routing\nMap', cat:'docs', r:22, x:0.54, y:0.56, body:'Even if docs exist, I may not know which file should be read first for which type of request. That creates inconsistent retrieval.', bullets:['Affects startup and task triage','Causes thread-to-thread variability'], source:'Recommended fix area' },
+          { id:'f6', label:'Session Tool\nMismatch', cat:'tools', r:24, x:0.80, y:0.56, body:'One thread may have different tool access, approvals, or process state than another. That makes capability feel inconsistent.', bullets:['Permissions are contextual','Live process state may belong elsewhere'], source:'Runtime/session behaviour' },
+          { id:'f7', label:'Result:\nFeels Forgetful', cat:'risks', r:24, x:0.52, y:0.84, body:'From your side, this looks like Jezza forgot the process or lost permissions. Mechanically, it is usually a context architecture failure, not random stupidity.', bullets:['Symptom, not root cause','Fix docs + retrieval + routing'], source:'Synthesis' }
+        ],
+        edges: [['f1','f7'],['f2','f7'],['f3','f7'],['f4','f7'],['f5','f7'],['f6','f7'],['f1','f4'],['f4','f5'],['f2','f3']]
+      },
+      future: {
+        title: 'Recommended architecture',
+        subtitle: 'How to make fresh threads much more reliable.',
+        categories: [['future','Structure'],['docs','Docs'],['memory','Memory'],['startup','Startup'],['tools','Execution']],
+        nodes: [
+          { id:'r1', label:'Global Rules\nCompact', cat:'startup', r:24, x:0.12, y:0.22, body:'Keep persona, user profile, and startup rules compact. These should define behaviour, not carry the whole business brain.', bullets:['SOUL / USER / AGENTS stay lean','Avoid bloating always-loaded context'], source:'Best-practice operating layer' },
+          { id:'r2', label:'Canonical\nProject Docs', cat:'docs', r:24, x:0.34, y:0.22, body:'Each active project gets one obvious canonical file that explains purpose, current status, key links, constraints, and read-first docs.', bullets:['One home per project','Instant orientation in new threads'], source:'Recommended future state' },
+          { id:'r3', label:'Canonical\nWorkflow Docs', cat:'docs', r:24, x:0.58, y:0.22, body:'Every recurring process becomes a workflow note with trigger, steps, exceptions, approvals, outputs, and linked resources.', bullets:['This is how process survives chat boundaries','Makes execution repeatable'], source:'Recommended future state' },
+          { id:'r4', label:'Daily Notes\nAlways', cat:'memory', r:22, x:0.22, y:0.54, body:'Maintain daily notes consistently so active work has a recent breadcrumb trail across sessions.', bullets:['Short-term continuity layer','Useful for in-flight work'], source:'Memory system' },
+          { id:'r5', label:'Long-Term\nMemory Index', cat:'memory', r:22, x:0.46, y:0.54, body:'Use durable memory for stable facts, decisions, preferences, people, and project-level truths that should survive every thread.', bullets:['Searchable durable recall','Promote important learnings here'], source:'MEMORY + brain index' },
+          { id:'r6', label:'Routing Map:\nIf X, Read Y', cat:'future', r:24, x:0.72, y:0.54, body:'Create an explicit routing file mapping task types, projects, and clients to the files I should inspect first. This removes guesswork at startup and during task triage.', bullets:['Huge consistency win','Turns retrieval into a system'], source:'Recommended future state' },
+          { id:'r7', label:'Consistent\nExecution', cat:'tools', r:24, x:0.50, y:0.84, body:'With the structure above, new threads become much steadier: less dependence on buried chat history, more on durable retrieval and standard routes.', bullets:['Better continuity','Less apparent forgetting or permission confusion'], source:'Desired result' }
+        ],
+        edges: [['r1','r2'],['r1','r4'],['r2','r5'],['r3','r5'],['r2','r6'],['r3','r6'],['r4','r7'],['r5','r7'],['r6','r7']]
+      }
+    };
+
+    const canvas = document.getElementById('graph');
+    const ctx = canvas.getContext('2d');
+    const wrap = document.getElementById('graphWrap');
+    const detailCard = document.getElementById('detailCard');
+    const legend = document.getElementById('legend');
+    const buttons = [...document.querySelectorAll('[data-view]')];
+
+    let currentView = 'system';
+    let nodes = [];
+    let edges = [];
+    let hovered = null;
+    let drag = null;
+    let mouseX = 0;
+    let mouseY = 0;
+    let filters = new Set();
+
+    function cloneView(key) {
+      const view = views[key];
+      nodes = view.nodes.map(n => ({ ...n, xPx: 0, yPx: 0, vx: 0, vy: 0 }));
+      edges = view.edges.map(e => [...e]);
+      buildLegend(view.categories);
+      seed();
+      renderDetail({
+        title: view.title,
+        type: 'View',
+        source: view.subtitle,
+        body: 'This view explains one part of the system. Click a node to inspect the mechanics behind it in plain English.',
+        bullets: ['Switch views using the buttons above', 'Click nodes for detail', 'Legend pills let you highlight specific categories']
+      });
+    }
+
+    function buildLegend(categories) {
+      legend.innerHTML = '';
+      filters = new Set();
+      categories.forEach(([key, label]) => {
+        const item = document.createElement('div');
+        item.className = 'item active';
+        item.dataset.cat = key;
+        item.innerHTML = `<span class="dot" style="background:${palette[key]}"></span>${label}`;
+        item.onclick = () => {
+          if (filters.has(key)) {
+            filters.delete(key);
+            item.classList.add('active');
+          } else {
+            filters.add(key);
+            item.classList.remove('active');
+          }
+          draw();
+        };
+        legend.appendChild(item);
+      });
+    }
+
+    function renderDetail(node) {
+      const chips = (node.bullets || []).map(b => `<span class="chip">${b}</span>`).join('');
+      const list = (node.bullets || []).map(b => `<li>${b}</li>`).join('');
+      detailCard.innerHTML = `
+        <h3>${node.title || node.label.replace(/\\n/g, ' ')}</h3>
+        <div class="sub">${node.type || 'Node'}</div>
+        <div class="detail-meta">${node.source || ''}</div>
+        <div class="chip-row">${chips}</div>
+        <div class="detail-body">
+          ${node.body ? `<p>${node.body}</p>` : ''}
+          ${list ? `<ul>${list}</ul>` : ''}
+        </div>
+      `;
+    }
+
+    function resize() {
+      const rect = wrap.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = 700 * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = '700px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seed();
+      draw();
+    }
+
+    function seed() {
+      const rect = wrap.getBoundingClientRect();
+      nodes.forEach(n => {
+        n.xPx = rect.width * n.x;
+        n.yPx = 700 * n.y;
+        n.vx = 0;
+        n.vy = 0;
+      });
+    }
+
+    function hidden(node) {
+      return filters.has(node.cat);
+    }
+
+    function findNode(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function isConnected(a, b) {
+      return edges.some(([x,y]) => (x === a.id && y === b.id) || (x === b.id && y === a.id));
+    }
+
+    function step() {
+      const rect = wrap.getBoundingClientRect();
+      const width = rect.width;
+      const height = 700;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i], b = nodes[j];
+          let dx = b.xPx - a.xPx;
+          let dy = b.yPx - a.yPx;
+          let d = Math.hypot(dx, dy) || 0.1;
+          const min = a.r + b.r + 54;
+          if (d < min) {
+            const force = (min - d) * 0.012;
+            dx /= d; dy /= d;
+            a.vx -= dx * force; a.vy -= dy * force;
+            b.vx += dx * force; b.vy += dy * force;
+          }
+        }
+      }
+      edges.forEach(([aId, bId]) => {
+        const a = findNode(aId), b = findNode(bId);
+        if (!a || !b) return;
+        let dx = b.xPx - a.xPx;
+        let dy = b.yPx - a.yPx;
+        let d = Math.hypot(dx, dy) || 0.1;
+        const target = 170;
+        const force = (d - target) * 0.0016;
+        dx /= d; dy /= d;
+        a.vx += dx * force; a.vy += dy * force;
+        b.vx -= dx * force; b.vy -= dy * force;
+      });
+      nodes.forEach(n => {
+        if (drag === n) {
+          n.xPx = mouseX;
+          n.yPx = mouseY;
+          n.vx = 0; n.vy = 0;
+          return;
+        }
+        n.vx += (width * n.x - n.xPx) * 0.0012;
+        n.vy += (height * n.y - n.yPx) * 0.0012;
+        n.vx *= 0.9;
+        n.vy *= 0.9;
+        n.xPx += n.vx;
+        n.yPx += n.vy;
+      });
+    }
+
+    function nodeLabelLines(label) {
+      return label.split('\n');
+    }
+
+    function draw() {
+      const rect = wrap.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, 700);
+
+      edges.forEach(([aId, bId]) => {
+        const a = findNode(aId), b = findNode(bId);
+        if (!a || !b || hidden(a) || hidden(b)) return;
+        const active = hovered && (hovered.id === aId || hovered.id === bId);
+        ctx.strokeStyle = active ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.10)';
+        ctx.lineWidth = active ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(a.xPx, a.yPx);
+        ctx.lineTo(b.xPx, b.yPx);
+        ctx.stroke();
+      });
+
+      nodes.forEach(n => {
+        if (hidden(n)) return;
+        const dim = hovered && hovered !== n && !isConnected(hovered, n);
+        ctx.globalAlpha = dim ? 0.26 : 1;
+        if (hovered === n) {
+          ctx.shadowColor = palette[n.cat];
+          ctx.shadowBlur = 28;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        ctx.fillStyle = palette[n.cat];
+        ctx.beginPath();
+        ctx.arc(n.xPx, n.yPx, n.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#09101d';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `800 ${n.r >= 24 ? 12 : 11}px Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+        const lines = nodeLabelLines(n.label);
+        lines.forEach((line, i) => {
+          ctx.fillText(line, n.xPx, n.yPx + (i - (lines.length - 1) / 2) * 13);
+        });
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function tick() {
+      step();
+      draw();
+      requestAnimationFrame(tick);
+    }
+
+    function pick(x, y) {
+      return nodes.find(n => !hidden(n) && Math.hypot(x - n.xPx, y - n.yPx) <= n.r);
+    }
+
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+      if (!drag) hovered = pick(mouseX, mouseY) || null;
+      canvas.style.cursor = hovered ? 'pointer' : 'default';
+      draw();
+    });
+
+    canvas.addEventListener('mousedown', e => {
+      const rect = canvas.getBoundingClientRect();
+      drag = pick(e.clientX - rect.left, e.clientY - rect.top) || null;
+    });
+
+    window.addEventListener('mouseup', e => {
+      if (!drag) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const target = pick(x, y);
+      if (target && target.id === drag.id) renderDetail(target);
+      drag = null;
+    });
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentView = btn.dataset.view;
+        buttons.forEach(b => b.classList.toggle('active', b === btn));
+        cloneView(currentView);
+        resize();
+      });
+    });
+
+    window.addEventListener('resize', resize);
+    cloneView(currentView);
+    resize();
+    tick();
+  </script>
 </body>
 </html>
